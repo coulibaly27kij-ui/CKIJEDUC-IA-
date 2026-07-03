@@ -1,134 +1,53 @@
 <!DOCTYPE html>
-<HTML langue="fr">
-<tête>
-    <méta jeu de caractères="UTF-8">
-    <titre>CKIJEDUC IA</titre>
-</tête>
-<corps>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat IA Educatif</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; }
+        #chat-box { height: 400px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #input-area { display: flex; gap: 5px; }
+        input { flex-grow: 1; padding: 10px; }
+        button { padding: 10px; }
+    </style>
+</head>
+<body>
 
-    <h1>Bonjour 👋 mon projet fonctionne sur Vercel</h1>
-
-    <!-- Interface Graphique du Chatbot CKIJEDUC -->
-    <div id="ckijeduc-chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-        <!-- Bouton flottant pour ouvrir la bulle -->
-        <button id="chat-toggle-btn" style="width: 60px; height: 60px; border-radius: 50%; background: #0D1B6E; color: white; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 26px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;">
-            💬
-        </button>
-
-        <!-- Fenêtre de discussion -->
-        <div id="chat-box" style="display: none; width: 350px; height: 450px; background: white; border-radius: 16px; box-shadow: 0 5px 25px rgba(0,0,0,0.25); position: absolute; bottom: 75px; right: 0; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0;">
-            <!-- En-tête -->
-            <div style="background: #0D1B6E; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span>Assistant CKIJEDUC IA 🤖</span>
-                </div>
-                <button id="close-chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">✕</button>
-            </div>
-            
-            <!-- Zone d'affichage des messages -->
-            <div id="chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 12px;">
-                <div style="background: #e0e7ff; color: #1e1b4b; padding: 10px 14px; border-radius: 12px; border-top-left-radius: 2px; max-width: 85%; align-self: flex-start; font-size: 14px; line-height: 1.5;">
-                    Bonjour ! Je suis l'IA de CKIJEDUC. Posez-moi vos questions sur vos cours, vos exercices ou le programme scolaire ! 📚 Côte d'Ivoire
-                </div>
-            </div>
-
-            <!-- Zone d'écriture -->
-            <div style="display: flex; padding: 12px; background: white; border-top: 1px solid #e2e8f0; gap: 8px;">
-                <input type="text" id="chat-input" placeholder="Posez votre question ici..." style="flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 14px;">
-                <button id="chat-send" style="background: #0D1B6E; color: white; border: none; padding: 0 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Envoyer</button>
-            </div>
-        </div>
+    <h2>Chat avec ton IA</h2>
+    <div id="chat-box"></div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Pose ta question...">
+        <button onclick="sendMessage()">Envoyer</button>
     </div>
 
-    <script>
-        const toggleBtn = document.getElementById('chat-toggle-btn');
-        const chatBox = document.getElementById('chat-box');
-        const closeBtn = document.getElementById('close-chat');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const chatSend = document.getElementById('chat-send');
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        toggleBtn.addEventListener('click', () => {
-            if (chatBox.style.display === 'none' || chatBox.style.display === '') {
-                chatBox.style.display = 'flex';
-                toggleBtn.innerHTML = '▼';
-            } else {
-                chatBox.style.display = 'none';
-                toggleBtn.innerHTML = '💬';
-            }
-        });
-
-        closeBtn.addEventListener('click', () => {
-            chatBox.style.display = 'none';
-            toggleBtn.innerHTML = '💬';
-        });
+        // 1. INSÈRE TA CLÉ API ICI
+        const API_KEY = "TA_CLE_API_ICI"; 
+        const genAI = new GoogleGenerativeAI(API_KEY);
 
         async function sendMessage() {
-            const text = chatInput.value.trim();
-            if (!text) return;
+            const input = document.getElementById("user-input");
+            const chatBox = document.getElementById("chat-box");
+            const message = input.value;
+            
+            if (!message) return;
 
-            appendMessage(text, 'user');
-            chatInput.value = '';
-
-            const loadingId = appendMessage('En train d\'analyser votre demande... ⏳', 'ai', true);
+            chatBox.innerHTML += `<p><b>Toi:</b> ${message}</p>`;
+            input.value = "";
 
             try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
-                });
-
-                const data = await response.json();
-                
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-
-                if (data.reply) {
-                    appendMessage(data.reply, 'ai');
-                } else {
-                    appendMessage("Désolé, je rencontre une petite difficulté technique.", 'ai');
-                }
+                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                const result = await model.generateContent(message);
+                const response = await result.response;
+                chatBox.innerHTML += `<p><b>IA:</b> ${response.text()}</p>`;
             } catch (error) {
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-                appendMessage("Connexion impossible. Vérifiez votre réseau.", 'ai');
+                chatBox.innerHTML += `<p style="color:red;">Erreur: Impossible de contacter l'IA.</p>`;
             }
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
-
-        function appendMessage(text, sender, isLoading = false) {
-            const msgDiv = document.createElement('div');
-            const id = 'msg-' + Date.now();
-            msgDiv.id = id;
-            
-            msgDiv.style.padding = '10px 14px';
-            msgDiv.style.borderRadius = '12px';
-            msgDiv.style.maxWidth = '85%';
-            msgDiv.style.fontSize = '14px';
-            msgDiv.style.lineHeight = '1.5';
-
-            if (sender === 'user') {
-                msgDiv.style.background = '#0D1B6E';
-                msgDiv.style.color = 'white';
-                msgDiv.style.alignSelf = 'flex-end';
-                msgDiv.style.borderTopRightRadius = '2px';
-            } else {
-                msgDiv.style.background = '#e0e7ff';
-                msgDiv.style.color = '#1e1b4b';
-                msgDiv.style.alignSelf = 'flex-start';
-                msgDiv.style.borderTopLeftRadius = '2px';
-                if (isLoading) msgDiv.style.fontStyle = 'italic';
-            }
-
-            msgDiv.innerText = text;
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            return id;
-        }
-
-        chatSend.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
     </script>
-
-</corps>
-</HTML>
+</body>
+</html>
