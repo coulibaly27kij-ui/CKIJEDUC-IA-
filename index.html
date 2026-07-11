@@ -22,33 +22,40 @@
         <button onclick="sendMessage()">Envoyer</button>
     </div>
 
-    <script type="module">
-        import { GoogleGenerativeAI } from "@google/generative-ai";
+<script>
+async function sendMessage() {
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const message = input.value;
+    
+    if (!message) return;
+    
+    chatBox.innerHTML += `<p><b>Toi :</b> ${message}</p>`;
+    input.value = "";
 
-        // 1. INSÈRE TA CLÉ API ICI
-        const API_KEY = "AQ.Ab8RN6JHdqIhVnHvFCKVwI2xxdnXx43-GGpJr-bxiWK9APg2rQ"; 
-        const genAI = new GoogleGenerativeAI(API_KEY);
-
-        async function sendMessage() {
-            const input = document.getElementById("user-input");
-            const chatBox = document.getElementById("chat-box");
-            const message = input.value;
-            
-            if (!message) return;
-
-            chatBox.innerHTML += `<p><b>Toi:</b> ${message}</p>`;
-            input.value = "";
-
-            try {
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-                const result = await model.generateContent(message);
-                const response = await result.response;
-                chatBox.innerHTML += `<p><b>IA:</b> ${response.text()}</p>`;
-            } catch (error) {
-                chatBox.innerHTML += `<p style="color:red;">Erreur: Impossible de contacter l'IA.</p>`;
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.reply) {
+            chatBox.innerHTML += `<p><b>IA :</b> ${data.reply}</p>`;
+        } else {
+            chatBox.innerHTML += `<p style="color:red;">Erreur : ${data.error || 'Impossible de générer une réponse.'}</p>`;
         }
-    </script>
+    } catch (error) {
+        chatBox.innerHTML += `<p style="color:red;">Erreur : Impossible de contacter le serveur.</p>`;
+    }
+    
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+// Rend la fonction accessible au bouton HTML
+window.sendMessage = sendMessage;
+</script>
+
 </body>
 </html>
